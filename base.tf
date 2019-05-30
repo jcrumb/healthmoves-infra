@@ -28,6 +28,9 @@ resource "random_id" "db_suffix" {
 }
 
 resource "google_sql_database_instance" "healthmoves_db_instance" {
+	# append a 4 byte suffix to the end of the db, useful when creating/destroying a lot
+	# during development, as when a google cloud sql instance is destroyed the name
+	# may remain unusable for up to a week afterwards.
 	name = "healthmoves-${random_id.db_suffix.hex}"
 	database_version = "MYSQL_5_7"
 	settings {
