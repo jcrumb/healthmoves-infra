@@ -34,7 +34,13 @@ resource "google_sql_database_instance" "healthmoves_db_instance" {
 	name = "healthmoves-${random_id.db_suffix.hex}"
 	database_version = "MYSQL_5_7"
 	settings {
-		tier = "db-n1-standard-1"
+		tier = "db-g1-small"
+		ip_configuration {
+		      authorized_networks {
+			      value = "0.0.0.0/0"
+			      name = "global"
+		      }
+	    	}
 	}
 }
 
