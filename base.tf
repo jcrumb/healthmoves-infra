@@ -66,11 +66,55 @@ resource "google_sql_user" "healthmoves_db_user" {
 	password = "${random_string.db_app_user_password.result}"
 }
 
+resource "google_pubsub_topic" "healthmoves_msg_queue" {
+	name = "healthmoves"
+}
+
+resource "random_string" "k8s_master_password" {
+	length = 30
+	special = false
+}
+
+resource "google_container_cluster" "healthmoves_kubernetes_cluster" {
+	name = "healthmoves-k8s"
+	remove_default_node_pool = true
+	initial_node_count = 1
+
+	master_auth {
+		username = "healthmoves-master"
+		password = "${random_string.k8s_master_password.result}"
+	}
+}
+
+resource "google_container_node_pool" "kubernetes_node_pool" {
+	name = "healthmoves-node-pool"
+	cluster = "${google_container_cluster.healthmoves_kubernetes_cluster.name}"
+	node_count = 1
+	node_config {
+		preemptible = false
+		machine_type = "n1-standard-1"
+		oauth_scopes = [
+		      "https://www.googleapis.com/auth/logging.write",
+		      "https://www.googleapis.com/auth/monitoring",
+    		]
+		metadata = {
+		      disable-legacy-endpoints = "true"
+	        }
+	}
+}
+
+output "k8s_password" {
+	description = "Kubernetes master password"
+	value = "${random_string.k8s_master_password.result}"
+}
+
 output "password" {
+	description = "DB user password"
 	value = "${random_string.db_app_user_password.result}"
 }
 
 output "ip" {
+	description = "Dev box IP"
 	value = "${google_compute_instance.ml_dev_box.network_interface.0.access_config.0.nat_ip}"
 }
 
